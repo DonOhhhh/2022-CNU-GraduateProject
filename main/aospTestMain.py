@@ -32,6 +32,7 @@ class performanceManager():
         self.className = ''
         self.methodName = ''
         self.Hook_package = ''
+        self.data = []
         self.device = frida.get_usb_device(timeout=10)
         self.measureExecTime()
         print(self.message)
@@ -39,7 +40,8 @@ class performanceManager():
     def on_message(self, message, data):
         if message['type'] == 'send':
             self.message = message['payload']
-            print(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}s')
+            self.data.append(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}s')
+            print(self.data[-1])
 
     def get_pid(self,Hook_package):
         pid = self.device.spawn([Hook_package])
@@ -73,7 +75,7 @@ class performanceManager():
                     var retval = this.%s();
                     var nEnd =  new Date().getTime();
                     var nDiff = nEnd - nStart;
-                    send(nDiff);
+                    send(nDiff / 1000.0);
                     // console.log("Execute time: " + nDiff / 1000.0 + "(s)");
                     return retval;
                 }
@@ -85,16 +87,21 @@ class performanceManager():
             print("[-] Running FR1DA!")
             script.load()
             sys.stdin.read()
-
+        except KeyboardInterrupt:
+            print('Writing result on result.txt')
+            with open('result.txt','a') as f:
+                for d in self.data:
+                    f.write(d+'\n')
         except Exception as e:
             print(e)
+        
 
 
 def main():
     print('1. modifyManager')
     print('2. buildManager')
     print('3. performanceManager')
-    n = input('input number to test:')
+    n = int(input('input number to test:'))
     
     if n == 1:
         obj = modifyManager()

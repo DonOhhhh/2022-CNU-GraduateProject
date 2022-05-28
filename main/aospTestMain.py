@@ -1,3 +1,6 @@
+
+
+
 import frida, sys
 
 class modifyManager():
@@ -88,7 +91,7 @@ class performanceManager():
             script.load()
             sys.stdin.read()
         except KeyboardInterrupt:
-            print('Writing result on result.txt')
+            print('\nWriting result on result.txt')
             with open('result.txt','a') as f:
                 for d in self.data:
                     f.write(d+'\n')

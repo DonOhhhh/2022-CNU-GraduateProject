@@ -1,4 +1,6 @@
+import os
 
+class modifyManager():#modify
     def __init__(self):
         self.code = 'testtesttest\n'
         pass

@@ -112,12 +112,22 @@ class modifyManager():
 
 class buildManager():
     def __init__(self):
-        pass
+        self.file = "Android.bp"
+        self.path = ""
+        self.buildAOSP()
+
+    def pathFinder(self):
+        root_dir = "/home/"
+        for root, dirs, files in os.walk(root_dir):
+            for fn in files:
+                if fn == self.file:
+                    return root+"/"
+        return None
 
     # 쉘 스크립트로 빌드하고 emulator 올리는 것까지 작성해주세요
     # 권한 문제가 없는지 확인해주세요
     def buildAOSP(self):
-        return None
+        sp.Popen(["./buildScript.sh $s" % self.pathFinder()], shell=True)
 
 
 class performanceManager():

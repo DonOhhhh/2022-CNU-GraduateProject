@@ -6,7 +6,7 @@ class modifyManager():
 
         self.imp = """import java.io.OutputStream;\nimport java.net.Socket;\nimport java.net.UnknownHostException;\n"""
 
-        self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zend";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
+        self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
 
         self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
         pass
@@ -127,7 +127,8 @@ class buildManager():
     # 쉘 스크립트로 빌드하고 emulator 올리는 것까지 작성해주세요
     # 권한 문제가 없는지 확인해주세요
     def buildAOSP(self):
-        sp.Popen(["./buildScript.sh $s" % self.pathFinder()], shell=True)
+        arg = self.pathFinder()
+        sp.Popen(["./buildScript.sh %s" % (arg)], shell=True)
 
 
 class performanceManager():

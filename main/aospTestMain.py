@@ -128,7 +128,7 @@ class buildManager():
     # 권한 문제가 없는지 확인해주세요
     def buildAOSP(self):
         arg = self.pathFinder()
-        sp.Popen(["./buildScript.sh $s" % (arg)], shell=True)
+        sp.Popen(["./buildScript.sh %s" % (arg)], shell=True)
 
 
 class performanceManager():

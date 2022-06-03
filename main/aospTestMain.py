@@ -1,14 +1,9 @@
 import frida, sys, os
+import subprocess as sp
 
 class modifyManager():
     def __init__(self):
         self.code = 'testtesttest\n'
-
-        self.imp = """import java.io.OutputStream;\nimport java.net.Socket;\nimport java.net.UnknownHostException;\n"""
-
-        self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
-
-        self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
         pass
 
     # os.walk() 함수를 사용하면 편합니다.

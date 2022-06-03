@@ -122,8 +122,16 @@ class buildManager():
     # 쉘 스크립트로 빌드하고 emulator 올리는 것까지 작성해주세요
     # 권한 문제가 없는지 확인해주세요
     def buildAOSP(self):
-        arg = self.pathFinder()
-        sp.Popen(["./buildScript.sh %s" % (arg)], shell=True)
+        arg1 = self.pathFinder()
+        while True:
+            option = input("Select option <1: build  2: no build>: ")
+            if option=="1":
+                arg2 = int(1)
+            elif option=="0":
+                arg2 = int(0)
+            else:
+                print("try again, Not exist option.")
+        sp.Popen(["./buildScript.sh %s %d" % (arg1, arg2)], shell=True)
 
 
 class performanceManager():

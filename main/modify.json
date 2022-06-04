@@ -1,0 +1,20 @@
+{
+  "abcBefore.txt"
+: {"socketObject": ["aaa" , "1"],
+    "insertCode": {
+      "bbb" : ["first", "0"],
+      "ddd" : ["second", "1"],
+      "ccc" : ["third", "0"]
+    }
+  },
+
+
+"abcAfter.txt"
+: {"socketObject": ["b", "1"],
+  "insertCode": {
+    "d" : ["f", "0"],
+    "a" : ["s", "0"],
+    "c" : ["t", "1"]
+  }
+}
+}

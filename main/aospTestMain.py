@@ -2,23 +2,7 @@ import frida, sys, os, json
 
 class modifyManager():
     def __init__(self):
-        self.code = 'testtesttest\n'
-
         self.imp = "import java.net.*;\n"
-
-        #####TCP 통신코드. dead code
-
-        self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
-
-        self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
-
-        #####TCP 통신 메시지 삽입 위한 문자열 앞-뒤. deadcode
-
-        self.sendMstart = 'try{\nString endmessage = "'
-
-        self.sendMend = '";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n'
-
-        #####
         #UDP 통신 코드
         self.UDPSock = 'try {\nbyte[] buffer = String.valueOf(System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
         pass
@@ -49,7 +33,7 @@ class modifyManager():
     # abcAfter.txt의 2번째 줄에 code를 삽입해주시면 됩니다.
     # 만약 수정이 잘못되었다면 abcBefore에서 복사해서 다시 수정하시면 됩니다.
     # ubuntu에서도 진행해보시고 실제 aosp 코드에 주석으로 코드를 삽입했을 때 권한문제가 없는지도 확인해주세요
-    def modify(self,fpath): #ZygoteInit.java 파일에 소켓 통신을 통한 성능측정 코드 추가
+    def modify(self): #ZygoteInit.java 파일에 소켓 통신을 통한 성능측정 코드 추가
 
         data = modifyManager.getJsonObjects(self, "modify.json")
         fNames = list(data.keys())#json 내 각 파일별로 코드 수정 수행
@@ -168,19 +152,19 @@ class performanceManager():
             # 작성된 후킹 스크립트 코드 로드 후 프로세스에 연결
             # Hooking 하는 대상 패키지 이름(앱의 본명)
             # "kr.ac.cnu.computer.homework10"
-            # self.Hook_package = input('Hooking 하는 대상 패키지 이름(앱의 본명): ')
-            self.Hook_package = 'kr.ac.cnu.computer.homework10'
+            self.Hook_package = input('Hooking 하는 대상 패키지 이름(앱의 본명): ')
+            # self.Hook_package = 'kr.ac.cnu.computer.homework10'
             pid = self.get_pid(self.Hook_package)
             print("App is starting.. pid:{}".format(pid))
             process = self.device.attach(pid)
             self.device.resume(pid)
 
             # android.media.MediaPlayer
-            # self.className = input('Hooking 하고자 하는 Class Name: ')
-            self.className = 'android.media.MediaPlayer'
+            self.className = input('Hooking 하고자 하는 Class Name: ')
+            # self.className = 'android.media.MediaPlayer'
             # start
-            # self.methodName = input('Hooking 하고자 하는 Method Name: ')
-            self.methodName = 'start'
+            self.methodName = input('Hooking 하고자 하는 Method Name: ')
+            # self.methodName = 'start'
 
             # 후킹 JS 코드
             jscode = """
@@ -221,7 +205,7 @@ def main():
 
     if n == 1:
         obj = modifyManager()
-        obj.modify(obj.getFilePath('ZygoteInit.java'))
+        obj.modify()
     elif n == 2:
         obj = buildManager()
     elif n == 3:

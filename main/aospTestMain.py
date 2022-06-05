@@ -8,6 +8,7 @@ class modifyManager():
         self.UDPSockFront = 'try {\nbyte[] buffer = String.valueOf("'
 
         self.UDPSockEnd = '" + System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
+
         pass
 
     def getJsonObjects(self, jfname):#{fname} json 파일을 읽어 객체를 반환

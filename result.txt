@@ -1,3 +1,0 @@
-package : kr.ac.cnu.computer.homework10, class : android.media.MediaPlayer, method : start, exec_time: 0.002s
-package : kr.ac.cnu.computer.homework10, class : android.media.MediaPlayer, method : start, exec_time: 0s
-package : kr.ac.cnu.computer.homework10, class : android.media.MediaPlayer, method : start, exec_time: 0.001s

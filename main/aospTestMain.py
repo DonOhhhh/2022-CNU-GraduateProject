@@ -1,28 +1,13 @@
-import json
-
-import frida, sys, os
+import frida, sys, os, json
+import subprocess as sp
 
 class modifyManager():
     def __init__(self):
-        self.code = 'testtesttest\n'
-
         self.imp = "import java.net.*;\n"
-
-        #####TCP 통신코드. dead code
-
-        self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
-
-        self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
-
-        #####TCP 통신 메시지 삽입 위한 문자열 앞-뒤. deadcode
-
-        self.sendMstart = 'try{\nString endmessage = "'
-
-        self.sendMend = '";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n'
-
-        #####
         #UDP 통신 코드
-        self.UDPSock = 'try {\nbyte[] buffer = String.valueOf(System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("192.168.10.9"), 5001));\n} catch (IOException e) { }'
+        self.UDPSockFront = 'try {\nbyte[] buffer = String.valueOf("'
+
+        self.UDPSockEnd = '" + System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
         pass
 
     def getJsonObjects(self, jfname):#{fname} json 파일을 읽어 객체를 반환
@@ -38,10 +23,10 @@ class modifyManager():
     # os.walk() 함수를 사용하면 편합니다.
     def getFilePath(self,fname):#fname 위치 찾아 문자열로 반환
         print("파일 경로 탐색을 시작합니다")
-        root_dir = "./"
+        root_dir = "/"
         for (root, dirs, files) in os.walk(root_dir):
             for walkin_fname in files:
-                print(root + fname)
+                # print(root + fname)
                 if walkin_fname == fname: #일치하는 파일 발견
                     print("파일 경로를 찾았습니다")
                     return root + "/" + fname #경로 + fname으로 파일 전체 상대 경로 반환
@@ -51,7 +36,7 @@ class modifyManager():
     # abcAfter.txt의 2번째 줄에 code를 삽입해주시면 됩니다.
     # 만약 수정이 잘못되었다면 abcBefore에서 복사해서 다시 수정하시면 됩니다.
     # ubuntu에서도 진행해보시고 실제 aosp 코드에 주석으로 코드를 삽입했을 때 권한문제가 없는지도 확인해주세요
-    def modify(self,fpath): #ZygoteInit.java 파일에 소켓 통신을 통한 성능측정 코드 추가
+    def modify(self): #ZygoteInit.java 파일에 소켓 통신을 통한 성능측정 코드 추가
 
         data = modifyManager.getJsonObjects(self, "modify.json")
         fNames = list(data.keys())#json 내 각 파일별로 코드 수정 수행
@@ -101,11 +86,11 @@ class modifyManager():
                             originalCodeInserted = True
                             print(f'{insertCode[targetLines[j]][0]} 메시지 삽입')
                             if int(insertCode[targetLines[j]][1]) == 0:
-                                f.write(self.UDPSock)
+                                f.write(self.UDPSockFront + str(insertCode[targetLines[j]][0]) + self.UDPSockEnd)
                                 f.write(codelines[i])  # 기존 파일 코드 작성
                             else:
                                 f.write(codelines[i])  # 기존 파일 코드 작성
-                                f.write(self.UDPSock)
+                                f.write(self.UDPSockFront + str(insertCode[targetLines[j]][0]) + self.UDPSockEnd)
 
                     if not originalCodeInserted:
                         f.write(codelines[i]) #기존 파일 코드 작성
@@ -135,11 +120,13 @@ class buildManager():
     def buildAOSP(self):
         arg1 = self.pathFinder()
         while True:
-            option = input("Select option <1: build  2: no build>: ")
+            option = input("Select option <1: build  0: no build>: ")
             if option=="1":
                 arg2 = int(1)
+                break
             elif option=="0":
                 arg2 = int(0)
+                break
             else:
                 print("try again, Not exist option.")
         sp.Popen(["./buildScript.sh %s %d" % (arg1, arg2)], shell=True)
@@ -154,12 +141,11 @@ class performanceManager():
         self.data = []
         self.device = frida.get_usb_device(timeout=10)
         self.measureExecTime()
-        print(self.message)
 
     def on_message(self, message, data):
         if message['type'] == 'send':
             self.message = message['payload']
-            self.data.append(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}s')
+            self.data.append(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}ms')
             print(self.data[-1])
 
     def get_pid(self,Hook_package):
@@ -171,19 +157,19 @@ class performanceManager():
             # 작성된 후킹 스크립트 코드 로드 후 프로세스에 연결
             # Hooking 하는 대상 패키지 이름(앱의 본명)
             # "kr.ac.cnu.computer.homework10"
-            # self.Hook_package = input('Hooking 하는 대상 패키지 이름(앱의 본명): ')
-            self.Hook_package = 'kr.ac.cnu.computer.homework10'
+            self.Hook_package = input('Hooking 하는 대상 패키지 이름(앱의 본명): ')
+            # self.Hook_package = 'kr.ac.cnu.computer.homework10'
             pid = self.get_pid(self.Hook_package)
             print("App is starting.. pid:{}".format(pid))
             process = self.device.attach(pid)
             self.device.resume(pid)
 
             # android.media.MediaPlayer
-            # self.className = input('Hooking 하고자 하는 Class Name: ')
-            self.className = 'android.media.MediaPlayer'
+            self.className = input('Hooking 하고자 하는 Class Name: ')
+            # self.className = 'android.media.MediaPlayer'
             # start
-            # self.methodName = input('Hooking 하고자 하는 Method Name: ')
-            self.methodName = 'start'
+            self.methodName = input('Hooking 하고자 하는 Method Name: ')
+            # self.methodName = 'start'
 
             # 후킹 JS 코드
             jscode = """
@@ -194,7 +180,7 @@ class performanceManager():
                     var retval = this.%s();
                     var nEnd =  new Date().getTime();
                     var nDiff = nEnd - nStart;
-                    send(nDiff / 1000.0);
+                    send(nDiff);
                     // console.log("Execute time: " + nDiff / 1000.0 + "(s)");
                     return retval;
                 }
@@ -224,6 +210,7 @@ def main():
 
     if n == 1:
         obj = modifyManager()
+        obj.modify()
     elif n == 2:
         obj = buildManager()
     elif n == 3:

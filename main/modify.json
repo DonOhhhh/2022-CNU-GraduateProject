@@ -1,8 +1,8 @@
 {
-"abcAfter.txt"
+"ZygoteInit.java"
 : {"insertCode": {
-    "main(String argv[])" : ["main() inserted", "1"],
-    "runSelectLoop" : ["runSelectLoop() inserted", "0"]
+    "main(String argv[])" : ["start", "1"],
+    "runSelectLoop" : ["end", "1"]
   }
 }
 }

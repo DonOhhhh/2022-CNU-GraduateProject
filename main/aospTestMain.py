@@ -5,8 +5,10 @@ class modifyManager():
     def __init__(self):
         self.imp = "import java.net.*;\n"
         #UDP 통신 코드
-        self.UDPSock = "try {\nbyte[] buffer = (\"end \" + String.valueOf(System.currentTimeMillis())).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName(\"10.0.2.2\"), 5001));\n} catch (IOException e) {}\n"
-        
+        self.UDPSockFront = 'try {\nbyte[] buffer = String.valueOf("'
+
+        self.UDPSockEnd = '" + System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
+
         pass
 
     def getJsonObjects(self, jfname):#{fname} json 파일을 읽어 객체를 반환
@@ -85,11 +87,11 @@ class modifyManager():
                             originalCodeInserted = True
                             print(f'{insertCode[targetLines[j]][0]} 메시지 삽입')
                             if int(insertCode[targetLines[j]][1]) == 0:
-                                f.write(self.UDPSock)
+                                f.write(self.UDPSockFront + str(insertCode[targetLines[j]][0]) + self.UDPSockEnd)
                                 f.write(codelines[i])  # 기존 파일 코드 작성
                             else:
                                 f.write(codelines[i])  # 기존 파일 코드 작성
-                                f.write(self.UDPSock)
+                                f.write(self.UDPSockFront + str(insertCode[targetLines[j]][0]) + self.UDPSockEnd)
 
                     if not originalCodeInserted:
                         f.write(codelines[i]) #기존 파일 코드 작성

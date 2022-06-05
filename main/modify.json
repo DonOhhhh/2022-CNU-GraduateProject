@@ -1,10 +1,8 @@
 {
-	"ZygoteInit.java": 
-	  {
-      "insertCode": 
-      {
-		    "main(String argv[])" : ["main() inserted", "1"],
-		    "runSelectLoop" : ["runSelectLoop() inserted", "1"]
-			}
-	  }
+"ZygoteInit.java"
+: {"insertCode": {
+    "main(String argv[])" : ["start", "1"],
+    "runSelectLoop" : ["end", "1"]
+  }
+}
 }

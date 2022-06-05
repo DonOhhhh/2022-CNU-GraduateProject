@@ -1,19 +1,28 @@
-import frida, sys, os, json
+import json
+
+import frida, sys, os
 
 class modifyManager():
     def __init__(self):
         self.code = 'testtesttest\n'
 
-        self.imp = """import java.io.OutputStream;\nimport java.net.Socket;\nimport java.net.UnknownHostException;\n"""
+        self.imp = "import java.net.*;\n"
+
+        #####TCP 통신코드. dead code
 
         self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
 
         self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
 
+        #####TCP 통신 메시지 삽입 위한 문자열 앞-뒤. deadcode
+
         self.sendMstart = 'try{\nString endmessage = "'
 
         self.sendMend = '";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n'
 
+        #####
+        #UDP 통신 코드
+        self.UDPSock = 'try {\nbyte[] buffer = String.valueOf(System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("192.168.10.9"), 5001));\n} catch (IOException e) { }'
         pass
 
     def getJsonObjects(self, jfname):#{fname} json 파일을 읽어 객체를 반환
@@ -71,7 +80,6 @@ class modifyManager():
             import_inserted = False #import문 삽입 여부
 
             #현재 파일 json
-            socketObject = data[fileName]["socketObject"]#소켓 객체 생성 코드 위치
             insertCode = data[fileName]["insertCode"]#소켓통신 코드, 메시지
             targetLines = list(insertCode.keys())#코드 삽입 위치(문자열)
 
@@ -88,25 +96,16 @@ class modifyManager():
                             import_inserted = True
                             continue
 
-                    if socketObject[0] in codelines[i]:
-                        if int(socketObject[1]) == 0:
-                            originalCodeInserted = True
-                            f.write(self.Zstart) #Zstart 코드 삽입
-                            f.write(codelines[i]) #기존 파일 코드 작성
-                        else:
-                            f.write(codelines[i])  # 기존 파일 코드 작성
-                            f.write(self.Zstart)  # Zstart 코드 삽입
-
                     for j in range(len(targetLines)):
                         if targetLines[j] in codelines[i]:
                             originalCodeInserted = True
                             print(f'{insertCode[targetLines[j]][0]} 메시지 삽입')
                             if int(insertCode[targetLines[j]][1]) == 0:
-                                f.write(self.sendMstart + insertCode[targetLines[j]][0] + self.sendMend)
+                                f.write(self.UDPSock)
                                 f.write(codelines[i])  # 기존 파일 코드 작성
                             else:
                                 f.write(codelines[i])  # 기존 파일 코드 작성
-                                f.write(self.sendMstart + insertCode[targetLines[j]][0] + self.sendMend)
+                                f.write(self.UDPSock)
 
                     if not originalCodeInserted:
                         f.write(codelines[i]) #기존 파일 코드 작성
@@ -119,12 +118,31 @@ class modifyManager():
 
 class buildManager():
     def __init__(self):
-        pass
+        self.file = "Android.bp"
+        self.path = ""
+        self.buildAOSP()
+
+    def pathFinder(self):
+        root_dir = "/home/"
+        for root, dirs, files in os.walk(root_dir):
+            for fn in files:
+                if fn == self.file:
+                    return root+"/"
+        return None
 
     # 쉘 스크립트로 빌드하고 emulator 올리는 것까지 작성해주세요
     # 권한 문제가 없는지 확인해주세요
     def buildAOSP(self):
-        return None
+        arg1 = self.pathFinder()
+        while True:
+            option = input("Select option <1: build  2: no build>: ")
+            if option=="1":
+                arg2 = int(1)
+            elif option=="0":
+                arg2 = int(0)
+            else:
+                print("try again, Not exist option.")
+        sp.Popen(["./buildScript.sh %s %d" % (arg1, arg2)], shell=True)
 
 
 class performanceManager():
@@ -189,7 +207,7 @@ class performanceManager():
             script.load()
             sys.stdin.read()
         except KeyboardInterrupt:
-            print('Writing result on result.txt')
+            print('\nWriting result on result.txt')
             with open('result.txt','a') as f:
                 for d in self.data:
                     f.write(d+'\n')

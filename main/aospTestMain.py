@@ -117,11 +117,13 @@ class buildManager():
     def buildAOSP(self):
         arg1 = self.pathFinder()
         while True:
-            option = input("Select option <1: build  2: no build>: ")
+            option = input("Select option <1: build  0: no build>: ")
             if option=="1":
                 arg2 = int(1)
+                break
             elif option=="0":
                 arg2 = int(0)
+                break
             else:
                 print("try again, Not exist option.")
         sp.Popen(["./buildScript.sh %s %d" % (arg1, arg2)], shell=True)

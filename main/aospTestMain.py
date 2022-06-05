@@ -130,6 +130,7 @@ class buildManager():
                 break
             else:
                 print("try again, Not exist option.")
+        sp.run(["chmod", "777", "./buildScript.sh"], stdout=sp.DEVNULL)
         sp.Popen(["./buildScript.sh %s %d" % (arg1, arg2)], shell=True)
 
 

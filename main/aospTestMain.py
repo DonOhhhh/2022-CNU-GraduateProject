@@ -1,15 +1,39 @@
+import json
+
 import frida, sys, os
 
 class modifyManager():
     def __init__(self):
         self.code = 'testtesttest\n'
 
-        self.imp = """import java.io.OutputStream;\nimport java.net.Socket;\nimport java.net.UnknownHostException;\n"""
+        self.imp = "import java.net.*;\n"
+
+        #####TCP 통신코드. dead code
 
         self.Zstart = """OutputStream outStream = null;\ntry{\nSocket sk = new Socket("10.0.2.2" , 8000) ;\noutStream = sk.getOutputStream();\nString startmessage = "Zstart";\noutStream.write(startmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
 
         self.Zend = """try{\nString endmessage = "Zend";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n"""
+
+        #####TCP 통신 메시지 삽입 위한 문자열 앞-뒤. deadcode
+
+        self.sendMstart = 'try{\nString endmessage = "'
+
+        self.sendMend = '";\noutStream.write(endmessage.getBytes());\noutStream.flush();\n}catch(UnknownHostException e){\ne.printStackTrace();\n}catch (IOException e) {\ne.printStackTrace();\n}\n'
+
+        #####
+        #UDP 통신 코드
+        self.UDPSock = 'try {\nbyte[] buffer = String.valueOf(System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("192.168.10.9"), 5001));\n} catch (IOException e) { }'
         pass
+
+    def getJsonObjects(self, jfname):#{fname} json 파일을 읽어 객체를 반환
+        #json은 파일명 및 각 파일별 소켓 객체 생성 위치, 소켓 통신 삽입 메시지 및 위치를 저장
+        #{filename1 : {"socketObject" : [함수 이름, 위치], "insertCode" : {함수 이름1: [메시지1, 위치], 함수 이름2 : [메시지2, 위치], ...}},...}
+        #함수 이름은 코드 내에서 해당 함수를 찾아 위치 값(0,1)에 따라 해당 문자열 전/후에 통신코드 삽입
+        #socketObject는 소켓 객체 생성 위치를 저장하고, insertCode는 배열로 outstream을 삽입할 위치와 전송할 메시지를 저장
+        #배열 내부에는 튜플로 위치와 메시지 저장
+        with open(jfname) as f:
+            data = json.load(f)
+        return data
 
     # os.walk() 함수를 사용하면 편합니다.
     def getFilePath(self,fname):#fname 위치 찾아 문자열로 반환
@@ -28,83 +52,65 @@ class modifyManager():
     # 만약 수정이 잘못되었다면 abcBefore에서 복사해서 다시 수정하시면 됩니다.
     # ubuntu에서도 진행해보시고 실제 aosp 코드에 주석으로 코드를 삽입했을 때 권한문제가 없는지도 확인해주세요
     def modify(self,fpath): #ZygoteInit.java 파일에 소켓 통신을 통한 성능측정 코드 추가
-        fpath = self.getFilePath("ZygoteInit.java")
-        if fpath == None:
-            print("ZygoteINit.java 파일이 존재하지 않습니다.")
-            return None
-        else:
-            print(f'ZygoteINit.java 경로: {fpath}')
 
-        print("ZygoteInit 코드 내 Zygote start 소켓 통신 위치 설정")
-        ZstartMethod = input("코드 내 함수(문자열)을 입력하십시오 :")
-        print("코드 위치를 입력하십시오")
-        ZSMlocation = input("1.위 2.아래 :")
+        data = modifyManager.getJsonObjects(self, "modify.json")
+        fNames = list(data.keys())#json 내 각 파일별로 코드 수정 수행
 
-        print("ZygoteInit 코드 내 Zygote end 소켓 통신 위치 설정")
-        ZendMethod = input("코드 내 함수(문자열)을 입력하십시오 :")
-        print("코드 위치를 입력하십시오")
-        ZEMlocation = input("1.위 2.아래 :")
-        if not (((ZSMlocation == "1") | (ZSMlocation == "2"))&((ZEMlocation == "1") | (ZEMlocation == "2"))):
-            print("코드 위치 선택 값이 1 또는 2가 아닙니다.")
-            return
+        for fileName in fNames:
+            fpath = self.getFilePath(fileName)
+            if fpath == None:
+                print(f"{fileName} 파일이 존재하지 않습니다.")
+                continue
+            else:
+                print(f'{fileName} 경로: {fpath}')
 
-        print("zygote 코드 수정을 시작합니다")
+            print(f"{fileName} 코드 수정을 시작합니다")
 
-        with open(fpath, 'r') as fr: #파일 읽기모드로 열기
-            codelines = fr.readlines() #파일 읽어와 배열 저장
-        fr.close()
-        print("ZygoteInit 파일 열람")
+            with open(fpath, 'r') as fr: #파일 읽기모드로 열기
+                codelines = fr.readlines() #파일 읽어와 배열 저장
+            fr.close()
 
-        with open("ZygoteInit_backup.java",'w') as fb:#백업용 파일 생성
-            for line in codelines:
-                fb.write(line)#백업
+            with open(f"{fileName}.backup", 'w') as fb:#백업용 파일 생성
+                for line in codelines:
+                    fb.write(line)#백업
 
-        print("ZygoteInit.java 파일이 현재 폴더에 백업되었습니다.")
-        fb.close()
+            print(f"{fileName} 파일이 현재 폴더에 백업되었습니다.")
+            fb.close()
 
-        import_inserted = False #import문 삽입 여부
-        ZS_inserted = False #Zygote 시작 소켓 삽입 여부
-        ZE_inserted = True#Zygote 종료 소켓 삽입 여부
+            import_inserted = False #import문 삽입 여부
 
-        with open(fpath, 'w') as f:
-            for codeline in codelines:#읽은 파일 한줄씩 비교/ 쓰기
-                if not import_inserted:
-                    if "import" in codeline:
-                        ###소켓 통신 위한 파일 import 추가
-                        print("import문 삽입")
-                        f.write(self.imp)  # 서버로 전송만을 위한 ouput 스트림
-                        f.write(codeline)  # 기존 파일 코드 작성
-                        import_inserted = True
-                        continue
+            #현재 파일 json
+            insertCode = data[fileName]["insertCode"]#소켓통신 코드, 메시지
+            targetLines = list(insertCode.keys())#코드 삽입 위치(문자열)
 
-                if ZstartMethod in codeline: #메인문 탐색, 메인문에에 코드 삽입
-                    ### 소켓통신시작 및 Zygote 시작 알리는 통신 실시
-                    print("소켓통신 시작 코드 삽입")
-                    if ZSMlocation == "1":
-                        f.write(self.Zstart)#소켓 연결 및 Zygote 시작 알림
-                        f.write(codeline)  # 기존 파일 코드 작성
-                    else:
-                        f.write(codeline)  # 기존 파일 코드 작성
-                        f.write(self.Zstart)  # 소켓 연결 및 Zygote 시작 알림
-                        ZS_inserted = True
-                        continue
+            with open(fpath, 'w') as f:
+                for i in range(len(codelines)):#읽은 파일 한줄씩 비교/ 쓰기
+                    originalCodeInserted = False  # 원본 코드 삽입되었는지
 
-                if ZendMethod in codeline:#runselectloop 메소드 앞에서 zygote 종료 전송
-                    print ("zygote end 통신코드 삽입")
-                    if ZEMlocation == "1":
-                        f.write(self.Zend)#프로세스 생성 종료 메시지
-                        f.write(codeline)  # 기존 파일 코드 작성
-                    else:
-                        f.write(codeline)  # 기존 파일 코드 작성
-                        f.write(self.Zend)  # 프로세스 생성 종료 메시지
-                        ZE_inserted = True
-                        continue
+                    if not import_inserted:
+                        if "import" in codelines[i]:
+                            ###소켓 통신 위한 파일 import 추가
+                            print("import문 삽입")
+                            f.write(self.imp)  # 서버로 전송만을 위한 ouput 스트림
+                            f.write(codelines[i])  # 기존 파일 코드 작성
+                            import_inserted = True
+                            continue
 
-                f.write(codeline) #기존 파일 코드 작성
+                    for j in range(len(targetLines)):
+                        if targetLines[j] in codelines[i]:
+                            originalCodeInserted = True
+                            print(f'{insertCode[targetLines[j]][0]} 메시지 삽입')
+                            if int(insertCode[targetLines[j]][1]) == 0:
+                                f.write(self.UDPSock)
+                                f.write(codelines[i])  # 기존 파일 코드 작성
+                            else:
+                                f.write(codelines[i])  # 기존 파일 코드 작성
+                                f.write(self.UDPSock)
 
-        f.close()
-        if not (import_inserted & ZS_inserted & ZE_inserted):
-            print("실패: 해당 함수 문자열 혹은 import문 위치를 찾을 수 없습니다.")
+                    if not originalCodeInserted:
+                        f.write(codelines[i]) #기존 파일 코드 작성
+
+            f.close()
 
 
         return None

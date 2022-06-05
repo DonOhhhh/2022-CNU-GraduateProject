@@ -7,7 +7,7 @@ class modifyManager():
         #UDP 통신 코드
         self.UDPSockFront = 'try {\nbyte[] buffer = String.valueOf("'
 
-        self.UDPSockEnd = '" + System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
+        self.UDPSockEnd = ' " + System.currentTimeMillis()).getBytes();\nnew DatagramSocket(5000).send(new DatagramPacket(buffer, buffer.length, InetAddress.getByName("10.0.2.2"), 5001));\n} catch (IOException e) { }\n'
 
         pass
 

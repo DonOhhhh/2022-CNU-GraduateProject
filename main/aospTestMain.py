@@ -1,4 +1,5 @@
 import frida, sys, os, json
+import subprocess as sp
 
 class modifyManager():
     def __init__(self):

@@ -143,7 +143,7 @@ class performanceManager():
     def on_message(self, message, data):
         if message['type'] == 'send':
             self.message = message['payload']
-            self.data.append(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}s')
+            self.data.append(f'package : {self.Hook_package}, class : {self.className}, method : {self.methodName}, exec_time: {self.message}ms')
             print(self.data[-1])
 
     def get_pid(self,Hook_package):
@@ -178,7 +178,7 @@ class performanceManager():
                     var retval = this.%s();
                     var nEnd =  new Date().getTime();
                     var nDiff = nEnd - nStart;
-                    send(nDiff / 1000.0);
+                    send(nDiff);
                     // console.log("Execute time: " + nDiff / 1000.0 + "(s)");
                     return retval;
                 }

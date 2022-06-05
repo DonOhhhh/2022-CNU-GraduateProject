@@ -9,8 +9,8 @@ if [ ${option} = 1 ]; then
   sudo chmod -R 777 .;
   make clobber;
   . build/envsetup.sh;
-  lunch sdk_phone_x86_64;
-  m -j16;
+  lunch sdk_phone_x86_64-userdebug;
+  m;
 fi
 
 emulator;
